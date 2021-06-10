@@ -1,0 +1,209 @@
+{
+	"info": {
+		"_postman_id": "89853a1b-3f2d-42ae-a7d4-35d7a4569aaf",
+		"name": "ContactManagement",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "contacts",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "client_id",
+						"value": "e1984c8d71024ccead0d0c429ca4c905",
+						"type": "text"
+					},
+					{
+						"key": "client_secret",
+						"value": "14906DDddC4c4B2d96F92488a81Ea45a",
+						"type": "text"
+					},
+					{
+						"key": "FirstName",
+						"name": "Content-Type",
+						"value": "Bob",
+						"type": "text"
+					},
+					{
+						"key": "LastName",
+						"value": "Frederick",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "Bob"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:8081/contact-management-sys-api/api/v1/contact",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"contact-management-sys-api",
+						"api",
+						"v1",
+						"contact"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "contact",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "client_id",
+						"type": "text",
+						"value": "e1984c8d71024ccead0d0c429ca4c905"
+					},
+					{
+						"key": "client_secret",
+						"type": "text",
+						"value": "14906DDddC4c4B2d96F92488a81Ea45a"
+					},
+					{
+						"key": "FirstName",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "Bob"
+					},
+					{
+						"key": "LastName",
+						"type": "text",
+						"value": "Frederick"
+					},
+					{
+						"key": "Content-Type",
+						"value": "Bob"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:8081/contact-management-sys-api/api/v1/contact",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"contact-management-sys-api",
+						"api",
+						"v1",
+						"contact"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "contact",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "client_id",
+						"value": "e1984c8d71024ccead0d0c429ca4c905",
+						"type": "text"
+					},
+					{
+						"key": "client_secret",
+						"value": "14906DDddC4c4B2d96F92488a81Ea45a",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"Identification\": {\n    \"FirstName\": \"Bob\",\n    \"LastName\": \"Frederick\",\n    \"DOB\": \"06/21/1980\",\n    \"Gender\": \"M\",\n    \"Title\": \"Manager\"\n  },\n  \"Address\": [\n    {\n      \"type\": \"home\",\n      \"number\": 1234,\n      \"street\": \"blah blah St\",\n      \"Unit\": \"1 a\",\n      \"City\": \"Somewhere\",\n      \"State\": \"WV\",\n      \"zipcode\": \"12345\"\n    }\n  ],\n  \"Communication\": [\n    {\n      \"type\": \"email\",\n      \"value\": \"bfe@sample.com\",\n      \"preferred\": \"true\"\n    },\n    {\n      \"type\": \"cell\",\n      \"value\": \"304-555-8282\"\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8081/contact-management-sys-api/api/v1/contact",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"contact-management-sys-api",
+						"api",
+						"v1",
+						"contact"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "contact",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "client_id",
+						"value": "e1984c8d71024ccead0d0c429ca4c905",
+						"type": "text"
+					},
+					{
+						"key": "client_secret",
+						"value": "14906DDddC4c4B2d96F92488a81Ea45a",
+						"type": "text"
+					},
+					{
+						"key": "FirstName",
+						"value": "Bob",
+						"type": "text"
+					},
+					{
+						"key": "LastName",
+						"value": "Frederick",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"Identification\": {\n    \"FirstName\": \"Bob\",\n    \"LastName\": \"Frederick\",\n    \"DOB\": \"06/21/1981\",\n    \"Gender\": \"M\",\n    \"Title\": \"Manager\"\n  },\n  \"Address\": [\n    {\n      \"type\": \"home\",\n      \"number\": 1234,\n      \"street\": \"blah blah St\",\n      \"Unit\": \"1 a\",\n      \"City\": \"Somewhere\",\n      \"State\": \"WV\",\n      \"zipcode\": \"12345\"\n    }\n  ],\n  \"Communication\": [\n    {\n      \"type\": \"email\",\n      \"value\": \"bfe@sample.com\",\n      \"preferred\": \"true\"\n    },\n    {\n      \"type\": \"cell\",\n      \"value\": \"304-555-8282\"\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8081/contact-management-sys-api/api/v1/contact",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"contact-management-sys-api",
+						"api",
+						"v1",
+						"contact"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

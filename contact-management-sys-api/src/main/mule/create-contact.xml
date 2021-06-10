@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="create-contact-flow" doc:id="4adf8537-119f-4d40-836d-47d0a4766a72" >
+		<json-logger:logger doc:name="start" doc:id="22deabf4-0b77-4835-adde-649be76ff9e3" config-ref="JSON_Logger_Config" message="Started creating contact"/>
+		<db:insert doc:name="insert contact" doc:id="9f9e4197-ea11-431e-85c3-68348472b331" config-ref="Database_Config" target="createContactResponse">
+			<db:sql ><![CDATA[INSERT INTO Contacts (FirstName, LastName, DOB, Gender, Title) VALUES (:fname, :lname, :dob, :gender, :title);]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	fname: payload.Identification.FirstName,
+	lname: payload.Identification.LastName,
+	dob: payload.Identification.DOB,
+	gender: payload.Identification.Gender,
+	title: payload.Identification.Title
+}]]]></db:input-parameters>
+		</db:insert>
+		<choice doc:name="check if contact created" doc:id="e124b8a8-0c75-4707-a6cf-19620a8ed9cc" >
+			<when expression="#[vars.createContactResponse.affectedRows &gt; 0]">
+				<flow-ref doc:name="retrieve-contact-id" doc:id="44e772b9-1c41-429d-a00b-33542803001c" name="retrieve-contact-id" target="contactId" />
+				<flow-ref doc:name="create-address-for-contact-id" doc:id="8d6edcbd-05db-4d66-9c2d-8cca893547d0" name="create-address-for-contact-id" target="createAddressResponse"/>
+				<flow-ref doc:name="create-communications-for-contact-id" doc:id="113b5bab-483b-49c2-85c7-78359187b6c4" name="create-communications-for-contact-id" target="createCommResponse"/>
+			</when>
+		</choice>
+		<ee:transform doc:name="create response" doc:id="34c1e71c-9d53-4d3d-9637-b2816df94222" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "CorrelationID": correlationId,
+  "Message": "Contact Created successfully!",
+  "Time": now(),
+  "Data": payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="end" doc:id="f8fc4df7-d3c8-4659-9a07-fc69fdd31c44" config-ref="JSON_Logger_Config" message="Completed creating contact successfully!"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7ccc8659-f21e-43cb-a2c3-c0ad45954693" >
+				<flow-ref doc:name="common-error-flow" doc:id="76d5adb3-cdce-40d9-aa1a-d42d1a67e62a" name="common-error-flow"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<sub-flow name="retrieve-contact-id" doc:id="415bbb89-9082-4c2e-85cb-d790d5cd43d7" >
+		<db:select doc:name="select last created contact id" doc:id="60878d92-9451-4823-a853-7f07ac734701" config-ref="Database_Config">
+			<db:sql ><![CDATA[select max(ContactID) ContactID from Contacts;]]></db:sql>
+		</db:select>
+	</sub-flow>
+	<sub-flow name="create-address-for-contact-id" doc:id="369cfd78-eca7-437f-a62d-1645119c3686" >
+		<foreach doc:name="for each address" doc:id="6702b583-5cce-4300-ba46-9636855b7575" collection="#[payload.Address]">
+			<ee:transform doc:name="json payload" doc:id="3f177837-d5d9-4e91-9c02-251c5c6b243c" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<db:insert doc:name="insert addresses" doc:id="0c612909-5362-497b-8242-c8143c9dbb1d" config-ref="Database_Config" target="createContactResponse">
+			<db:sql><![CDATA[INSERT INTO Address
+  (Type,
+  Number,
+  Street,
+  Unit,
+  City,
+  State,
+  Country,
+  ContactId)
+  VALUES
+  (:type, :num, :street, :unit, :city, :state, :country, :contactId);]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	"type": payload."type",
+	num: payload.number,
+	street: payload.street,
+	unit: payload.Unit,
+	city: payload.City,
+	state: payload.State,
+	country: payload.country default "USA",
+	contactId: vars.contactId["ContactID"][0]
+}]]]></db:input-parameters>
+		</db:insert>
+		</foreach>
+	</sub-flow>
+	<sub-flow name="create-communications-for-contact-id" doc:id="611b0d22-c53c-43cc-9f6c-879ac0ae9ee7" >
+		<foreach doc:name="for each communication" doc:id="ac9d92c3-e514-4e19-8f50-3d01288bfe37" collection="#[payload.Communication]">
+			<ee:transform doc:name="json payload" doc:id="d5a18770-0bb5-42c4-bf82-ae900de9e783">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<db:insert doc:name="insert communications" doc:id="a1d0f149-bba0-4ef7-a289-c65886074766" config-ref="Database_Config" target="createContactResponse">
+			<db:sql><![CDATA[INSERT INTO Communications
+(type,
+Value,
+Preffered,
+ContactId)
+VALUES
+(:type, :value, :preferred, :contactId);]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	"type": payload."type",
+	value: payload.value,
+	preferred: payload.preferred default "false",
+	contactId: vars.contactId["ContactID"][0]
+}]]]></db:input-parameters>
+		</db:insert>
+		</foreach>
+	</sub-flow>
+</mule>

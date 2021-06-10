@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="update-contacts-flow" doc:id="c76bf3ba-b82f-4754-83ee-0bcf3ff39397" >
+		<json-logger:logger doc:name="Logger" doc:id="a374cab0-95ab-4e5f-b59f-c307aaadce42" config-ref="JSON_Logger_Config" tracePoint="FLOW" message="Starting to retrieve contacts"/>
+		<ee:transform doc:name="contact" doc:id="1e5cb368-28ec-418a-9466-1fb34539bae7" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="headers" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	fname: attributes.headers.FirstName default "",
+	lname: attributes.headers.LastName default ""
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:select doc:name="get contact id on name" doc:id="16396964-91eb-4d82-803d-ba5f69fb6845" config-ref="Database_Config" target="contactId" targetValue="#[payload[0]]">
+			<db:sql><![CDATA[select ContactID from Contacts where FirstName = :fname and LastName = :lname]]></db:sql>
+			<db:input-parameters><![CDATA[#[vars.headers]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="check if contact is present for deletion" doc:id="8471ac22-b107-46b2-acb2-46ca9afa87de" >
+			<when expression="#[vars.contactId != '' and vars.contactId != null]">
+				<db:update doc:name="update contact" doc:id="5191956a-f75a-44af-a3ec-645af77dbd92" config-ref="Database_Config" target="updateContactResponse">
+					<db:sql ><![CDATA[update hr.Contacts set FirstName = :fname, LastName = :lname, DOB = :dob, Gender = :gender, Title = :title where ContactID = :contactId]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	fname: payload.Identification.FirstName,
+	lname: payload.Identification.LastName,
+	dob: payload.Identification.DOB,
+	gender: payload.Identification.Gender,
+	title: payload.Identification.Title,
+	contactId: vars.contactId[0]
+}]]]></db:input-parameters>
+				</db:update>
+				<foreach doc:name="for each communication" doc:id="8fae046a-7207-413a-89ad-3fed15973dc6" collection="#[payload.Communication]">
+					<db:update doc:name="update communications for contact" doc:id="40c0e39d-6043-492d-a14b-e90ec019e562" config-ref="Database_Config">
+					<db:sql><![CDATA[update hr.Communications set Value = :value where ContactID = :contactId and type = :type]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+	value: payload.value,
+	"type": payload."type",
+	contactId: vars.contactId[0]
+}]]]></db:input-parameters>
+				</db:update>
+				</foreach>
+				<foreach doc:name="for each address" doc:id="86027c78-290e-46f2-927f-14067cb87adb" collection="#[payload.Address]">
+					<db:update doc:name="update address for contact" doc:id="d324c891-d0cb-46e9-9da9-d51325389ff3" config-ref="Database_Config" target="updateContactResponse">
+					<db:sql><![CDATA[update hr.Address set number = :number, street = :street, Unit = :unit, City = :city, State = :state where ContactID = :contactId and type = :type]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+	number: payload.number,
+	street: payload.street,
+	unit: payload.Unit,
+	city: payload.City,
+	state: payload.State,
+	contactId: vars.contactId[0],
+	"type": vars."type"
+}]]]></db:input-parameters>
+				</db:update>
+				</foreach>
+				<ee:transform doc:name="update response" doc:id="566627e2-277d-4623-a54e-9a832944794c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "CorrelationID": correlationId,
+  "Message": "Contact Updated successfully!",
+  "Time": now(),
+  "Data": payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<set-payload doc:name="empty payload" doc:id="02e42f94-f02e-48bb-b1ea-bc5d0ec0c031" value="#[[]]"/>
+				<flow-ref doc:name="no-data-found" doc:id="10698d28-f0a2-4575-b611-8989a03ede54" name="no-data-found" />
+			</otherwise>
+		</choice>
+		<json-logger:logger doc:name="Logger" doc:id="a417d8e4-fb85-4d88-b118-d78faf3a842b" config-ref="JSON_Logger_Config" message="Completed retrieve contacts successfully!!" tracePoint="END" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d9d12d86-b462-4908-97a8-1dc8658d7e1a" >
+				<flow-ref doc:name="common-error-flow" doc:id="7f59dbc6-8d8a-4db6-a8ca-a1c8faafe025" name="common-error-flow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

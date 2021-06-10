@@ -1,0 +1,77 @@
+CREATE TABLE Contacts (
+  ContactID int(11) NOT NULL AUTO_INCREMENT,
+  FirstName varchar(45) NOT NULL,
+  LastName varchar(45) NOT NULL,
+  DOB varchar(10) NOT NULL,
+  Gender varchar(5) NOT NULL,
+  Title varchar(45) DEFAULT NULL,
+  PRIMARY KEY (ContactID),
+  UNIQUE KEY FirstName_UNIQUE (FirstName),
+  UNIQUE KEY LastName_UNIQUE (LastName),
+  UNIQUE KEY DOB_UNIQUE (DOB)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+
+CREATE TABLE Communications (
+  Id int(11) NOT NULL AUTO_INCREMENT,
+  type varchar(10) NOT NULL,
+  Value varchar(25) NOT NULL,
+  Preffered varchar(5) NOT NULL,
+  ContactId int(11) DEFAULT NULL,
+  PRIMARY KEY (Id),
+  UNIQUE KEY type_UNIQUE (type),
+  KEY ContactId (ContactId),
+  CONSTRAINT communications_ibfk_1 FOREIGN KEY (ContactId) REFERENCES Contacts (ContactID)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+CREATE TABLE Address (
+  Id int(11) NOT NULL AUTO_INCREMENT,
+  Type varchar(10) NOT NULL,
+  Number varchar(10) DEFAULT NULL,
+  Street varchar(45) DEFAULT NULL,
+  Unit varchar(5) DEFAULT NULL,
+  City varchar(15) NOT NULL,
+  State varchar(15) NOT NULL,
+  Country varchar(10) NOT NULL,
+  ContactId int(11) DEFAULT NULL,
+  PRIMARY KEY (Id),
+  UNIQUE KEY Type_UNIQUE (Type),
+  KEY fk_contact_id (ContactId),
+  CONSTRAINT fk_contact_id FOREIGN KEY (ContactId) REFERENCES Contacts (ContactID)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
+
+
+INSERT INTO hr.Contacts
+(FirstName,
+LastName,
+DOB,
+Gender,
+Title)
+VALUES
+('Bob', 'Frederick', '06/21/1980', 'M', 'Manager');
+
+INSERT INTO hr.Address
+(Type,
+Number,
+Street,
+Unit,
+City,
+State,
+Country,
+ContactId)
+VALUES
+('home2', '123', 'test st', '34r4', 'New York City', 'NY', 'USA', '1');
+
+INSERT INTO hr.Communications
+(type,
+Value,
+Preffered,
+ContactId)
+VALUES
+('email', 'bfe@sample.com', 'true', '1'),
+('phone', '121-212-4434', 'false', '1');
+
+
+-Dmule.env=dev -Dencrypt.key=mulesoft
+
+java -cp secure-properties-tool.jar com.mulesoft.tools.SecurePropertiesTool string encrypt AES CBC mulesoft "some value to encrypt"

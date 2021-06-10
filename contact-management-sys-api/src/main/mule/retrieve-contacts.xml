@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="retrieve-contacts-flow" doc:id="c76bf3ba-b82f-4754-83ee-0bcf3ff39397" >
+		<json-logger:logger doc:name="Logger" doc:id="a374cab0-95ab-4e5f-b59f-c307aaadce42" config-ref="JSON_Logger_Config" tracePoint="FLOW" message="Starting to retrieve contacts"/>
+		<choice doc:name="check if first name and last name are passed" doc:id="c7e5c29b-f88f-42aa-8de1-a631f916c81c" >
+			<when expression="#[attributes.headers.FirstName == null or attributes.headers.LastName == null or attributes.headers.FirstName == '' or attributes.headers.LastName == '']">
+				<db:select doc:name="get all contacts" doc:id="37859081-c1df-4581-880b-2824d75a1f7a" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from Contacts]]></db:sql>
+		</db:select>
+			</when>
+			<otherwise >
+				<db:select doc:name="get contact based on name" doc:id="a7698071-dbc3-4285-9d49-f3a35de19a9a" config-ref="Database_Config" >
+					<db:sql ><![CDATA[select * from Contacts where FirstName = :fname and LastName = :lname]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	fname: attributes.headers.FirstName default "",
+	lname: attributes.headers.LastName default ""
+}]]]></db:input-parameters>
+				</db:select>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="response" doc:id="aec0a0e1-c6bf-442a-926b-7c2a531db2ee" >
+			<ee:message >
+				<ee:set-payload resource="dwl/retrieve-contacts.dwl" />
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="Logger" doc:id="a417d8e4-fb85-4d88-b118-d78faf3a842b" config-ref="JSON_Logger_Config" message="Completed retrieve contacts successfully!!" tracePoint="END" />
+		<flow-ref doc:name="no-data-found" doc:id="10698d28-f0a2-4575-b611-8989a03ede54" name="no-data-found"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d9d12d86-b462-4908-97a8-1dc8658d7e1a" >
+				<flow-ref doc:name="common-error-flow" doc:id="7f59dbc6-8d8a-4db6-a8ca-a1c8faafe025" name="common-error-flow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="retrieve-addresses-for-contact" doc:id="83c77526-8b3e-4e39-84ea-1205eb399df2" >
+		<db:select doc:name="retrieve all addresses for a contact" doc:id="1982a9b3-21b7-44b2-9a79-d22b0e87f788" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from Address where ContactId = :contactId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	contactId: payload.ContactId
+}]]]></db:input-parameters>
+		</db:select>
+	</flow>
+	<flow name="retrieve-communications-for-contact" doc:id="65937bcc-a89e-4670-a991-da57bb913a57" >
+		<db:select doc:name="retrieve all communications for a contact" doc:id="6468326a-fcad-46f3-99ad-41d06ef0ac5f" config-ref="Database_Config" >
+			<db:sql ><![CDATA[select * from Communications where ContactId = :contactId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	contactId: payload.ContactId
+}]]]></db:input-parameters>
+		</db:select>
+	</flow>
+</mule>

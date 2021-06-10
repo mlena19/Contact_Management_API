@@ -1,0 +1,14 @@
+http:
+  host: "localhost"
+  port: "8081"
+  api.path: "contact-management-sys-api"
+
+db:
+  host: "localhost"
+  port: "3306"
+  username: "![kGUrMSl4q+g=]"
+  password: "![kPL0lHJdQ8w=]"
+  database: "hr"
+  
+api:
+  id: "![HU87/tINbsEy/hYjDuUvlw==]"

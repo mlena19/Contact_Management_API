@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:bti="http://www.mulesoft.org/schema/mule/ee/bti"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/ee/bti http://www.mulesoft.org/schema/mule/ee/bti/current/mule-bti-ee.xsd">
+	<secure-properties:config
+		name="Secure_Properties_Config" doc:name="Secure Properties Config"
+		doc:id="17efdb16-174f-4cb2-9437-a7a5c2862caf"
+		file="properties/contact-management-api-${mule.env}.yaml" key="${encrypt.key}">
+		<secure-properties:encrypt
+			algorithm="Blowfish" />
+	</secure-properties:config>
+
+	<http:listener-config
+		name="contact-management-sys-api-httpListenerConfig">
+		<http:listener-connection
+			host="${secure::http.host}" port="${secure::http.port}" />
+	</http:listener-config>
+
+	<db:config name="Database_Config" doc:name="Database Config"
+		doc:id="62bc74bf-9f5c-4402-9ddf-713c5213e090">
+		<db:my-sql-connection host="${secure::db.host}"
+			port="${secure::db.port}" user="${secure::db.username}"
+			password="${secure::db.password}" database="${secure::db.database}" />
+	</db:config>
+
+	<json-logger:config name="JSON_Logger_Config"
+		doc:name="JSON Logger Config"
+		doc:id="b30909ee-f624-421d-a620-b8907fcb7080"
+		applicationName="${app.name}" applicationVersion="1.0.0"
+		environment="${mule.env}" />
+
+	<apikit:config name="contact-management-sys-api-config"
+		api="resource::33b3a4f2-163b-4c4a-923f-6cd43f032288:contact-management-sys-api:1.0.0:raml:zip:contact-management-sys-api.raml"
+		outboundHeadersMapName="outboundHeaders"
+		httpStatusVarName="httpStatus" />
+
+	<!-- <api-gateway:autodiscovery apiId="${secure::api.id}" ignoreBasePath="true" 
+		doc:name="API Autodiscovery" doc:id="3ce48c7e-9b75-464f-867a-9a6fe649f9ad" 
+		flowRef="contact-management-sys-api-main" /> -->
+
+</mule>

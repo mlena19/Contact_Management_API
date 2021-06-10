@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="delete-contacts-flow" doc:id="c76bf3ba-b82f-4754-83ee-0bcf3ff39397" >
+		<json-logger:logger doc:name="Logger" doc:id="a374cab0-95ab-4e5f-b59f-c307aaadce42" config-ref="JSON_Logger_Config" tracePoint="FLOW" message="Starting to retrieve contacts"/>
+		<ee:transform doc:name="headers" doc:id="1e5cb368-28ec-418a-9466-1fb34539bae7" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="headers" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	fname: attributes.headers.FirstName default "",
+	lname: attributes.headers.LastName default ""
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:select doc:name="get contact id on name" doc:id="16396964-91eb-4d82-803d-ba5f69fb6845" config-ref="Database_Config" target="contactId" targetValue="#[payload[0]]">
+			<db:sql><![CDATA[select ContactID from Contacts where FirstName = :fname and LastName = :lname]]></db:sql>
+			<db:input-parameters><![CDATA[#[vars.headers]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="check if contact is present for deletion" doc:id="8471ac22-b107-46b2-acb2-46ca9afa87de" >
+			<when expression="#[vars.contactId != '' and vars.contactId != null]">
+				<db:delete doc:name="delete communications for contact" doc:id="60d8569f-3ee1-48eb-b71b-70ed26e7d671" config-ref="Database_Config">
+			<db:sql><![CDATA[delete from Communications where ContactId = :contactId]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	contactId: vars.contactId[0]
+}]]]></db:input-parameters>
+		</db:delete>
+				<db:delete doc:name="delete addresses for contact" doc:id="dcec4f5a-269d-4dd5-bec0-3ed0de326217" config-ref="Database_Config">
+			<db:sql><![CDATA[delete from Address where ContactId = :contactId]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	contactId: vars.contactId[0]
+}]]]></db:input-parameters>
+		</db:delete>
+				<db:delete doc:name="delete contact based on name" doc:id="fc3c29c4-4bb0-443b-8a96-bff8840fd192" config-ref="Database_Config">
+			<db:sql><![CDATA[delete from Contacts where ContactID = :contactId]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	contactId: vars.contactId[0]
+}]]]></db:input-parameters>
+		</db:delete>
+				<ee:transform doc:name="delete response" doc:id="566627e2-277d-4623-a54e-9a832944794c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "CorrelationID": correlationId,
+  "Message": "Contact Deleted successfully!",
+  "Time": now(),
+  "Data": vars.headers
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="no-data-found" doc:id="10698d28-f0a2-4575-b611-8989a03ede54" name="no-data-found" />
+			</otherwise>
+		</choice>
+		<json-logger:logger doc:name="Logger" doc:id="a417d8e4-fb85-4d88-b118-d78faf3a842b" config-ref="JSON_Logger_Config" message="Completed retrieve contacts successfully!!" tracePoint="END" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d9d12d86-b462-4908-97a8-1dc8658d7e1a" >
+				<flow-ref doc:name="common-error-flow" doc:id="7f59dbc6-8d8a-4db6-a8ca-a1c8faafe025" name="common-error-flow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
